@@ -1,0 +1,174 @@
+{% extends "bootstrap/base.html" %}
+{% block content %}
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Opticare</title>
+	<link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css">
+	<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://cdn.bootcss.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+	<link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet" />
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js'></script>
+	<script type="text/javascript">
+		$(document).ready(function(){
+
+			document.getElementById('loader').style.display = 'none';
+
+			$("#leftImageUpload").change(function(){
+				const file = this.files[0];
+				if (file) {
+					const reader = new FileReader();
+					reader.onload = function(e){
+						document.getElementById('leftImagePreview').setAttribute("src",e.target.result);
+					}
+					reader.readAsDataURL(file);
+				}
+			});
+			$("#rightImageUpload").change(function(){
+				const file = this.files[0];
+				if (file) {
+					const reader = new FileReader();
+					reader.onload = function(e){
+						document.getElementById('rightImagePreview').setAttribute("src",e.target.result);
+					}
+					reader.readAsDataURL(file);
+				}
+			});
+
+			$('#analyse').click(function () {
+
+				document.getElementById('analyse').style.display = 'none';
+				document.getElementById('loader').style.display = 'block';
+
+		        var form_data = new FormData($('#upload-file')[0]);
+
+		        // Make prediction by calling api /predict
+		        $.ajax({
+		            type: 'POST',
+		            url: '/analyse',
+		            data: form_data,
+		            contentType: false,
+		            cache: false,
+		            processData: false,
+		            async: true,
+		            success: function (data) {
+		                // Get and display the result
+		              //  $('#result').text(' Result:  ' + data);
+		
+						document.getElementById('loader').style.display = 'none';
+		                document.getElementById('analyse').style.display = 'block';
+		            	var arr = data.split(",");
+		   
+		            	for (var i = 0; i < 5; i++) {
+		            		arr[i] = parseFloat(arr[i]);
+		            	}
+
+
+			            var barData = {
+				            labels : ["No DR", "Mild","Moderate", "Severe", "Proliferative DR"],
+
+				    		datasets : [{
+				        		fillColor: "rgba(83,51,237,.8)",
+				        		strokeColor: "rgba(83,51,237,.8)",
+				        		pointColor: "rgba(151,187,205,1)",
+				        		data : arr
+				          	}]
+				      	}
+
+						// get bar chart canvas
+					    var mychart = document.getElementById("chartleft").getContext("2d");
+
+					    steps = 1
+					    max = 1
+
+					     // draw bar chart
+					    new Chart(mychart).Bar(barData, {
+					        scaleOverride: true,
+					        scaleSteps: steps,
+					        scaleStepWidth: Math.ceil(max / steps),
+					        scaleStartValue: 0,
+					        scaleShowVerticalLines: true,
+					        scaleShowGridLines : true,
+					        barShowStroke : true,
+					        scaleShowLabels: true
+					       }
+					     );
+
+
+		            },
+		        });
+		    });
+
+
+
+
+
+		});
+	</script>
+</head>
+
+<div class="container">
+	<div class="jumbotron">
+		<h2>Opticare</h2>
+	</div>
+
+    <form id="upload-file" method="post" enctype="multipart/form-data" style="margin-top: 120px;">
+
+    <div class="row">
+    		
+    	<div class="col-md-6" align="center">
+	        <div class="row-md-6" align="center">
+				<div class="image-section">
+					<div class="img-preview">
+						<img src="../static/leftImg.png" id="leftImagePreview" name="leftImagePreview" class="rounded-circle" style="height: 200px; width: 200px;">
+					</div>
+				</div>
+			</div>
+	        <div class="row-md-6" style="margin-top: 10px;">
+	        	<div class="row-md-6" align="center">
+			        <div class="custom-file">
+		        		<div class="form-group">
+				            <span class="btn btn-primary">
+			                    <input type="file" name="leftImageUpload" id="leftImageUpload" accept=".png, .jpg, .jpeg">
+		                    </span>
+			            </div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+        
+        <div class="col-md-6" align="center">
+		    <div class="row">
+		    		
+		    	<div class="col-md-6" align="center">
+
+			        <div class="row-md-6" style="margin-top: 10px;">
+			        	<div class="row-md-6" align="center">
+							<canvas id="chartleft" width="400" height="300"></canvas>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+		</div>
+	</div>
+</form>    
+
+	<div align="center" style="margin-top: 50px;">
+		<button type="button" name="analyse" id="analyse" class="btn btn-primary btn-lg"/>Analyse</button>
+		<button class="btn btn-primary btn-lg" type="button" id="loader" name="loader" disabled>
+	  		<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+	  		Loading...
+		</button>
+	</div>
+
+    	
+</div>
+
+
+{% endblock %}
